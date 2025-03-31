@@ -1,9 +1,12 @@
+import pygame
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mechanics.tetris import TetrisGame
 from random_player import RandomPlayer
+
+from mechanics.main import setup_pygame, draw_board
 
 class Arena:
     def __init__(self):
@@ -33,5 +36,17 @@ class Arena:
 if __name__ == "__main__":
     arena = Arena()
     score = arena.play_game()
+
     print(f"Game over! Score: {score}")
 
+    # Display ending board state
+    display = True
+    if display:
+        screen, font = setup_pygame()
+        draw_board(screen, font, arena.game)
+        while True:
+            # Display the board until the user closes the window
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()

@@ -1,14 +1,10 @@
+import pygame
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import pygame
-import sys
-from tetris import TetrisGame
-from colors import BLACK, GRAY, WHITE
-
-# Initialize Pygame
-pygame.init()
+from mechanics.tetris import TetrisGame
+from mechanics.colors import BLACK, GRAY, WHITE
 
 # Constants
 BLOCK_SIZE = 30
@@ -18,19 +14,27 @@ SCREEN_HEIGHT = 600
 BOARD_OFFSET_X = (SCREEN_WIDTH - 10 * BLOCK_SIZE) // 2
 BOARD_OFFSET_Y = (SCREEN_HEIGHT - 20 * BLOCK_SIZE) // 2
 
-# Create the game window
-screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Tetris")
 
-# Initialize fonts
-font = pygame.font.Font(None, 36)
+# Must be run only once
+def setup_pygame():
+    # Initialize Pygame
+    pygame.init()
 
-def draw_block(x, y, color):
+    # Create the game window
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Tetris")
+
+    # Initialize fonts
+    font = pygame.font.Font(None, 36)
+
+    return screen, font
+
+def draw_block(screen, x, y, color):
     """Draw a single block with a 3D effect"""
     pygame.draw.rect(screen, color, (x, y, BLOCK_SIZE, BLOCK_SIZE))
     pygame.draw.rect(screen, WHITE, (x, y, BLOCK_SIZE, BLOCK_SIZE), 1)
     
-def draw_board(game):
+def draw_board(screen, font, game):
     """Draw the game board"""
     # Draw background
     screen.fill(BLACK)
@@ -46,7 +50,7 @@ def draw_board(game):
             if game.board[row][col]:
                 x = BOARD_OFFSET_X + col * BLOCK_SIZE
                 y = BOARD_OFFSET_Y + row * BLOCK_SIZE
-                draw_block(x, y, game.colors[row][col])
+                draw_block(screen, x, y, game.colors[row][col])
                 
     # Draw ghost piece
     if not game.game_over and game.current_piece:
@@ -63,7 +67,7 @@ def draw_board(game):
             if row >= 0:
                 x = BOARD_OFFSET_X + col * BLOCK_SIZE
                 y = BOARD_OFFSET_Y + row * BLOCK_SIZE
-                draw_block(x, y, game.current_piece.color)
+                draw_block(screen, x, y, game.current_piece.color)
                 
     # Draw score and level
     score_text = font.render(f"Score: {game.score}", True, WHITE)
@@ -82,6 +86,8 @@ def draw_board(game):
     pygame.display.flip()
 
 def main():
+    screen, font = setup_pygame()
+
     game = TetrisGame()
     clock = pygame.time.Clock()
     fall_time = 0
@@ -128,7 +134,7 @@ def main():
             game.spawn_piece()
         
         # Draw the game
-        draw_board(game)
+        draw_board(screen, font, game)
 
 if __name__ == "__main__":
-    main() 
+    main()
