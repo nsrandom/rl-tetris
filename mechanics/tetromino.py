@@ -1,5 +1,5 @@
 import numpy as np
-from colors import PIECE_COLORS
+from mechanics.colors import PIECE_COLORS
 
 # Tetromino shapes defined as (4,4) matrices
 TETROMINO_SHAPES = {

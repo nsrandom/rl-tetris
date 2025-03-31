@@ -1,7 +1,7 @@
 import numpy as np
 import random
-from tetromino import Tetromino, TETROMINO_SHAPES
-from colors import BLACK, GRAY, PIECE_COLORS
+from mechanics.tetromino import Tetromino, TETROMINO_SHAPES
+from mechanics.colors import BLACK, GRAY, PIECE_COLORS
 
 class TetrisGame:
     def __init__(self, rows=20, cols=10):
