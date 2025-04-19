@@ -15,6 +15,8 @@ class ActionProbabilities(nn.Module):
             nn.GELU(),
             nn.Linear(128, 64),
             nn.GELU(),
+            # nn.Linear(64, 64),
+            # nn.GELU(),
             nn.Linear(64, ROTATIONS + LR_MOVES),
         )
 
