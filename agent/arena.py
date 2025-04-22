@@ -5,7 +5,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mechanics.tetris import TetrisGame
 # from random_player import RandomPlayer
-from rl_player import RLPlayer
+from rl_player import RLPlayer, TrainRLPlayer
 
 from mechanics.main import setup_pygame, draw_board
 
@@ -38,7 +38,6 @@ def play_game_fast(player):
                 sys.exit()
 
     return game.score
-
 
 
 def play_game_slowly(player):
@@ -105,6 +104,9 @@ def play_game_slowly(player):
 
 
 if __name__ == "__main__":
-    player=RLPlayer()
+    player = RLPlayer()
+
+    TrainRLPlayer.train(player=player, epochs=100, batch_size=100, lr=0.01)
+
     # play_game_slowly(player)
     play_game_fast(player)

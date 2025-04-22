@@ -20,10 +20,10 @@ class TetrisGame:
         """Create a new random tetromino piece"""
         if self.current_piece is None:
             shape_name = random.choice(list(TETROMINO_SHAPES.keys()))
-            print(f"Spawning new piece: {shape_name}")  # Debug print
+            # print(f"Spawning new piece: {shape_name}")  # Debug print
             self.current_piece = Tetromino(shape_name)
             if self.check_collision():
-                print("Game over detected!")  # Debug print
+                # print("Game over detected!")  # Debug print
                 self.game_over = True
                 
     def check_collision(self):
