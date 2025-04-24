@@ -17,8 +17,8 @@ class ActionProbabilities(nn.Module):
             nn.GELU(),
             nn.Linear(128, 64),
             nn.GELU(),
-            # nn.Linear(64, 64),
-            # nn.GELU(),
+            nn.Linear(64, 64),
+            nn.GELU(),
             nn.Linear(64, ROTATIONS + LR_MOVES),
         )
 
@@ -32,7 +32,7 @@ class ActionProbabilities(nn.Module):
         return (rotation_probs, lr_steps_probs)
 
 class RLPlayer:
-    def __init__(self, greedy_prob=0.2):
+    def __init__(self, greedy_prob=0.5):
         self.model = ActionProbabilities()
         self.greedy_prob = greedy_prob
 
@@ -59,15 +59,15 @@ class RLPlayer:
 class TrainRLPlayer:
     @staticmethod
     def load(player, filepath):
-        player.load_state_dict(torch.load(filepath, weights_only=True))
-        player.eval()
+        player.model.load_state_dict(torch.load(filepath, weights_only=True))
+        player.model.eval()
 
     @staticmethod
     def save(player, filepath):
-        torch.save(player.state_dict(), filepath)
+        torch.save(player.model.state_dict(), filepath)
 
     @staticmethod
-    def train(player, epochs, batch_size, lr):
+    def train(player, epochs, batch_size, lr, discount=0.99):
         optimizer = torch.optim.Adam(player.model.parameters(), lr=lr)
 
         for epoch in range(epochs):
@@ -77,31 +77,38 @@ class TrainRLPlayer:
             experiences = ExperienceReplayer.play(player, batch_size)
             loss = 0
             for experience in experiences:
-                (state, action, reward) = experience
-                (cur_board, cur_piece) = state
-                (rotations, lr_steps) = action
+                # Each experience contains the whole play for 1 game
+                # We will iterate the samples in reverse, so that earlier
+                # states can include discounted future rewards
+                discounted_future_reward = 0
+                for sample in reversed(experience):
+                    (state, action, reward) = sample
+                    (cur_board, cur_piece) = state
+                    (rotations, lr_steps) = action
 
-                # Offset lr_steps to array indices
-                lr_steps = lr_steps + ROTATIONS + 1
+                    # Offset lr_steps to array indices
+                    lr_steps = lr_steps + ROTATIONS + 1
 
-                # Get computed probabilities from current model
-                board = torch.from_numpy(cur_board).float().reshape(-1)
-                piece = torch.from_numpy(cur_piece.shape.copy()).float().reshape(-1)
-                rotation_probs, steps_probs = player.model(board, piece)
+                    # Get computed probabilities from current model
+                    board = torch.from_numpy(cur_board).float().reshape(-1)
+                    piece = torch.from_numpy(cur_piece.shape.copy()).float().reshape(-1)
+                    rotation_probs, steps_probs = player.model(board, piece)
 
-                # if reward > 0:
-                #     print("Reward:", reward)
+                    # TODO: Should I be using log probabilities?
+                    # loss += -torch.log(rotation_probs[rotations]) * reward
+                    # loss += -torch.log(steps_probs[lr_steps]) * reward
 
-                # TODO: Should I be using log probabilities?
-                # loss += -torch.log(rotation_probs[rotations]) * reward
-                # loss += -torch.log(steps_probs[lr_steps]) * reward
+                    total_reward = reward + discounted_future_reward
+                    loss += -rotation_probs[rotations] * total_reward
+                    loss += -steps_probs[lr_steps] * total_reward
 
-                # TODO: Use discounted rewards instead
-                loss += -rotation_probs[rotations] * reward
-                loss += -steps_probs[lr_steps] * reward
+                    # Update discounted reward for next iteration
+                    discounted_future_reward = discount * total_reward
             
             # Backward pass
             loss.backward()
             # Update the weights
             optimizer.step()
+            # if (epoch + 1) % 100 == 0:
+            #     print(f'Epoch {epoch+1}, Loss: {loss.item():.4f}')
             print(f'Epoch {epoch+1}, Loss: {loss.item():.4f}')

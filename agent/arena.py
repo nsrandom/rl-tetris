@@ -106,7 +106,10 @@ def play_game_slowly(player):
 if __name__ == "__main__":
     player = RLPlayer()
 
-    TrainRLPlayer.train(player=player, epochs=100, batch_size=100, lr=0.01)
+    FILE = "./agent/rlplayer.pth"
+    TrainRLPlayer.load(player, FILE)
+    TrainRLPlayer.train(player=player, epochs=20, batch_size=100, lr=0.1, discount=1.0)
+    TrainRLPlayer.save(player, FILE)
 
     # play_game_slowly(player)
     play_game_fast(player)

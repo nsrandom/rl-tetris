@@ -27,7 +27,8 @@ class ExperienceReplayer:
             pass
 
     # Runs the game multiple times, and returns the replay experiences
-    # Each experience will be a (state, action, reward) tuple, where:
+    # Each experience will be a full iteration of the game, and store
+    # an array of (state, action, reward) tuples, where:
     #   state = (current_board, piece)
     #   action = (rotations, lr_steps)
     #   reward = change in score after the action completes
@@ -36,6 +37,7 @@ class ExperienceReplayer:
         experiences = []
         for _ in range(num_times):
             game = TetrisGame()
+            samples = []
 
             while not game.game_over:
                 cur_board = game.board
@@ -52,11 +54,21 @@ class ExperienceReplayer:
 
                 # Two boards can have the same score, so we want to increase the value
                 # of the terminal state by how much the board is filled.
+                # Further, we give a higher value to lower rows, to encourage higher
+                # fill density.
+                # We scale this value down since we don't want it to dominate over finishing rows.
                 if game.game_over:
-                    score_delta += np.count_nonzero(game.board) / 10.0
+                    fill_score = 0
+                    for i, row in enumerate(game.board):
+                        fill_score += i * np.count_nonzero(row)
+                    fill_score /= 1000.0
+                    score_delta += fill_score
 
                 # Collect an experience - (state, action, reward)
-                experience = ((cur_board, cur_piece), (rotations, lr_steps), score_delta)
-                experiences.append(experience)
+                sample = ((cur_board, cur_piece), (rotations, lr_steps), score_delta)
+                samples.append(sample)
+            
+            # Collect the samples from a whole iteration
+            experiences.append(samples)
 
         return experiences
