@@ -18,8 +18,8 @@ TETROMINO_SHAPES = {
                    [0, 0, 0, 0],
                    [0, 0, 0, 0]]),
     
-    'O': np.array([[1, 1, 0, 0],
-                   [1, 1, 0, 0],
+    'O': np.array([[0, 1, 1, 0],
+                   [0, 1, 1, 0],
                    [0, 0, 0, 0],
                    [0, 0, 0, 0]]),
     
@@ -36,6 +36,11 @@ TETROMINO_SHAPES = {
     'Z': np.array([[1, 1, 0, 0],
                    [0, 1, 1, 0],
                    [0, 0, 0, 0],
+                   [0, 0, 0, 0]]),
+    
+    '.': np.array([[0, 1, 0, 0],
+                   [0, 0, 0, 0],
+                   [0, 0, 0, 0],
                    [0, 0, 0, 0]])
 }
 
@@ -45,8 +50,8 @@ class Tetromino:
         self.shape = TETROMINO_SHAPES[shape_name].copy()
         self.color = PIECE_COLORS[shape_name]
         self.row = 0
-        self.col = 3  # Start from the middle of the board
-        
+        self.col = 4  # Start from the middle of the board
+
     def rotate(self):
         """Rotate the tetromino clockwise"""
         self.shape = np.rot90(self.shape, k=-1)

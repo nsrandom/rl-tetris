@@ -20,5 +20,8 @@ PIECE_COLORS = {
     'O': YELLOW,
     'S': GREEN,
     'T': PURPLE,
-    'Z': RED
+    'Z': RED,
+
+    # For testing purposes only
+    '.': CYAN,
 } 

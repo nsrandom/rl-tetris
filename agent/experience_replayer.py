@@ -3,28 +3,9 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from mechanics.tetris import TetrisGame
+from mechanics.tetris import TetrisGame, apply_moves
 
 class ExperienceReplayer:
-
-    @staticmethod
-    def apply_moves(game, rotations, lr_steps):
-        # First rotate
-        for _ in range(rotations):
-            game.rotate_piece()
-        
-        # Then move left-right 1 step at a time
-        # This prevents the move from being rejected if the agent
-        # computes more steps than what's valid
-        if lr_steps != 0:
-            direction = 1 if lr_steps > 0 else -1
-            num_steps = abs(lr_steps)
-            for _ in range(num_steps):
-                game.move_piece(0, direction)
-        
-        # Finally, hard drop
-        while game.move_piece(1, 0):
-            pass
 
     # Runs the game multiple times, and returns the replay experiences
     # Each experience will be a full iteration of the game, and store
@@ -46,7 +27,7 @@ class ExperienceReplayer:
 
                 # Ask the agent to compute actions, and apply them
                 rotations, lr_steps = player.choose_action(game)
-                ExperienceReplayer.apply_moves(game, rotations, lr_steps)
+                apply_moves(game, rotations, lr_steps)
                 score_delta = game.score - cur_score
 
                 # Spawn a new piece if needed
@@ -65,7 +46,7 @@ class ExperienceReplayer:
                     score_delta += fill_score
 
                 # Collect an experience - (state, action, reward)
-                sample = ((cur_board, cur_piece), (rotations, lr_steps), score_delta)
+                sample = ((cur_board, cur_piece), (rotations, lr_steps), score_delta / 10)
                 samples.append(sample)
             
             # Collect the samples from a whole iteration

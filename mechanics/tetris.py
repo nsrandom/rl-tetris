@@ -19,11 +19,10 @@ class TetrisGame:
     def spawn_piece(self):
         """Create a new random tetromino piece"""
         if self.current_piece is None:
-            shape_name = random.choice(list(TETROMINO_SHAPES.keys()))
-            # print(f"Spawning new piece: {shape_name}")  # Debug print
+            # shape_name = random.choice(list(TETROMINO_SHAPES.keys()))
+            shape_name = '.'
             self.current_piece = Tetromino(shape_name)
             if self.check_collision():
-                # print("Game over detected!")  # Debug print
                 self.game_over = True
                 
     def check_collision(self):
@@ -45,19 +44,20 @@ class TetrisGame:
                 self.colors[row][col] = self.current_piece.color
         self.clear_lines()
         self.current_piece = None
-        
+
     def clear_lines(self):
         """Clear completed lines and update score"""
         lines_to_clear = []
         for row in range(self.rows):
             if all(self.board[row]):
                 lines_to_clear.append(row)
-                
+
         if lines_to_clear:
+            # print(f"Yay! Cleared {lines_to_clear} lines!")
             self.lines_cleared += len(lines_to_clear)
             self.score += self.calculate_score(len(lines_to_clear))
             self.level = 1 + self.lines_cleared // 10
-            
+
             # Remove the cleared lines and add new empty lines at the top
             for row in lines_to_clear:
                 # For the game board
@@ -84,7 +84,7 @@ class TetrisGame:
                 self.lock_piece()
             return False
         return True
-        
+
     def rotate_piece(self):
         """Rotate the current piece if possible"""
         if self.current_piece is None or self.game_over:
@@ -106,15 +106,15 @@ class TetrisGame:
         ghost_piece.shape = self.current_piece.shape.copy()
         ghost_piece.row = self.current_piece.row
         ghost_piece.col = self.current_piece.col
-        
+
         # Save the current piece temporarily
         original_piece = self.current_piece
         self.current_piece = ghost_piece
-        
+
         # Move ghost piece down until collision
         while not self.check_collision():
             ghost_piece.move(1, 0)
-        
+
         # Move back up one step since we collided
         ghost_piece.move(-1, 0)
         
@@ -128,4 +128,24 @@ class TetrisGame:
         
     def get_next_move_delay(self):
         """Get the delay between moves based on the current level"""
-        return max(50, 1000 - (self.level - 1) * 50)  # Minimum 50ms delay 
+        return max(50, 1000 - (self.level - 1) * 50)  # Minimum 50ms delay
+
+
+@staticmethod
+def apply_moves(game: TetrisGame, rotations: int, lr_steps: int):
+    # First rotate
+    for _ in range(rotations):
+        game.rotate_piece()
+    
+    # Then move left-right 1 step at a time
+    # This prevents the move from being rejected if the agent
+    # computes more steps than what's valid
+    if lr_steps != 0:
+        direction = 1 if lr_steps > 0 else -1
+        num_steps = abs(lr_steps)
+        for _ in range(num_steps):
+            game.move_piece(0, direction)
+    
+    # Finally, hard drop
+    while game.move_piece(1, 0):
+        pass
