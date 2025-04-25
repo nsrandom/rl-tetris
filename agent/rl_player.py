@@ -4,7 +4,7 @@ import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from constants import BOARD_SIZE, PIECE_SIZE, ROTATIONS, LR_MOVES
+from constants import BOARD_SIZE, PIECE_SIZE, ROTATIONS, LR_MOVES, LR_OFFSET
 from mechanics.tetris import TetrisGame
 from experience_replayer import ExperienceReplayer
 
@@ -13,14 +13,14 @@ class ActionProbabilities(nn.Module):
     def __init__(self):
         super(ActionProbabilities, self).__init__()
         self.nn = nn.Sequential(
-            nn.Linear(BOARD_SIZE + PIECE_SIZE, 128),
+            nn.Linear(BOARD_SIZE + PIECE_SIZE, 256),
             nn.Sigmoid(),
-            nn.Linear(128, 64),
+            nn.Linear(256, 256),
             nn.Sigmoid(),
-            nn.Linear(64, 64),
+            nn.Linear(256, 256),
             nn.Sigmoid(),
             # Each combination of rotations and left/right steps is a distinct action
-            nn.Linear(64, ROTATIONS * LR_MOVES),
+            nn.Linear(256, ROTATIONS * LR_MOVES),
         )
 
     # Returns probabilities for rotations & left-right moves
@@ -57,7 +57,7 @@ class RLPlayer:
         #     action_idx = torch.distributions.Categorical(probs=action_probs).sample().item()
 
         rotations = int(action_idx / LR_MOVES)
-        lr_steps = (action_idx % LR_MOVES) - 5
+        lr_steps = (action_idx % LR_MOVES) - LR_OFFSET
         # print(f"RL player chose to rotate {rotations} time(s), and moved {lr_steps} steps")
         return rotations, lr_steps
 
@@ -93,7 +93,7 @@ class TrainRLPlayer:
                     (rotations, lr_steps) = action
 
                     # Offset lr_steps to array indices
-                    lr_steps = lr_steps + ROTATIONS + 1
+                    lr_steps = lr_steps + LR_OFFSET
 
                     # Get computed probabilities from current model
                     board = torch.from_numpy(cur_board).float().reshape(-1)
@@ -105,7 +105,9 @@ class TrainRLPlayer:
                     # loss += -torch.log(steps_probs[lr_steps]) * reward
 
                     total_reward = reward + discounted_future_reward
-                    loss += torch.log(action_probs[rotations * LR_MOVES + lr_steps]) * total_reward
+                    # Probabilities are (0,1), hence log(prob) < 0
+                    # We want to maximize reward, hence we will define loss as negative reward, and minimize loss
+                    loss += -torch.log(action_probs[rotations * LR_MOVES + lr_steps]) * total_reward
 
                     # Update discounted reward for next iteration
                     discounted_future_reward = discount * total_reward
