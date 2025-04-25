@@ -14,12 +14,13 @@ class ActionProbabilities(nn.Module):
         super(ActionProbabilities, self).__init__()
         self.nn = nn.Sequential(
             nn.Linear(BOARD_SIZE + PIECE_SIZE, 128),
-            nn.GELU(),
+            nn.Sigmoid(),
             nn.Linear(128, 64),
-            nn.GELU(),
+            nn.Sigmoid(),
             nn.Linear(64, 64),
-            nn.GELU(),
-            nn.Linear(64, ROTATIONS + LR_MOVES),
+            nn.Sigmoid(),
+            # Each combination of rotations and left/right steps is a distinct action
+            nn.Linear(64, ROTATIONS * LR_MOVES),
         )
 
     # Returns probabilities for rotations & left-right moves
@@ -27,12 +28,15 @@ class ActionProbabilities(nn.Module):
         x = torch.cat((board, piece), dim=0)  # Concatenate the flattened inputs
         x = self.nn(x)
 
-        rotation_probs = F.softmax(x[:ROTATIONS], dim=0)
-        lr_steps_probs = F.softmax(x[ROTATIONS:], dim=0)
-        return (rotation_probs, lr_steps_probs)
+        x = F.softmax(x, dim=0)
+        return x
+
+        # rotation_probs = F.softmax(x[:ROTATIONS], dim=0)
+        # lr_steps_probs = F.softmax(x[ROTATIONS:], dim=0)
+        # return (rotation_probs, lr_steps_probs)
 
 class RLPlayer:
-    def __init__(self, greedy_prob=0.5):
+    def __init__(self, greedy_prob=0.3):
         self.model = ActionProbabilities()
         self.greedy_prob = greedy_prob
 
@@ -41,17 +45,19 @@ class RLPlayer:
         board = torch.from_numpy(game.board).float().reshape(-1)
         piece = torch.from_numpy(game.current_piece.shape).float().reshape(-1)
 
-        rotation_probs, steps_probs = self.model(board, piece)
+        # rotation_probs, steps_probs = self.model(board, piece)
+        action_probs = self.model(board, piece)
 
-        if random.random() < self.greedy_prob:
-            # Choose the highest probability action
-            rotations = torch.argmax(rotation_probs)
-            lr_steps = torch.argmax(steps_probs) - ROTATIONS - 1
-        else:
-            # Sample from the probability distribution
-            rotations = torch.distributions.Categorical(probs=rotation_probs).sample().item()
-            lr_steps = torch.distributions.Categorical(probs=steps_probs).sample().item() - ROTATIONS - 1
+        # Always sample
+        action_idx = torch.distributions.Categorical(probs=action_probs).sample().item()
 
+        # if random.random() < self.greedy_prob:  # Choose the highest probability action
+        #     action_idx = torch.argmax(action_probs)
+        # else:  # Sample from the probability distribution
+        #     action_idx = torch.distributions.Categorical(probs=action_probs).sample().item()
+
+        rotations = int(action_idx / LR_MOVES)
+        lr_steps = (action_idx % LR_MOVES) - 5
         # print(f"RL player chose to rotate {rotations} time(s), and moved {lr_steps} steps")
         return rotations, lr_steps
 
@@ -92,15 +98,14 @@ class TrainRLPlayer:
                     # Get computed probabilities from current model
                     board = torch.from_numpy(cur_board).float().reshape(-1)
                     piece = torch.from_numpy(cur_piece.shape.copy()).float().reshape(-1)
-                    rotation_probs, steps_probs = player.model(board, piece)
+                    action_probs = player.model(board, piece)
 
                     # TODO: Should I be using log probabilities?
                     # loss += -torch.log(rotation_probs[rotations]) * reward
                     # loss += -torch.log(steps_probs[lr_steps]) * reward
 
                     total_reward = reward + discounted_future_reward
-                    loss += -rotation_probs[rotations] * total_reward
-                    loss += -steps_probs[lr_steps] * total_reward
+                    loss += torch.log(action_probs[rotations * LR_MOVES + lr_steps]) * total_reward
 
                     # Update discounted reward for next iteration
                     discounted_future_reward = discount * total_reward
