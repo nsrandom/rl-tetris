@@ -4,7 +4,8 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mechanics.tetris import TetrisGame, apply_moves
-from rl_player import RLPlayer, TrainRLPlayer
+from policy_gradient_player import PolicyGradient_RLPlayer
+from train_rl_player import TrainRLPlayer
 
 from mechanics.main import setup_pygame, draw_board
 
@@ -49,10 +50,6 @@ def play_game_slowly(player):
     print("Game initialized")  # Debug print
     
     while True:
-        frame_count += 1
-        if frame_count % 60 == 0:  # Print debug info every 60 frames
-            print(f"Frame {frame_count}, FPS: {clock.get_fps():.1f}")
-
         # Get the time since last tick
         delta_time = clock.tick(60)
 
@@ -102,15 +99,15 @@ def play_game_slowly(player):
 
 
 if __name__ == "__main__":
-    player = RLPlayer()
+    player = PolicyGradient_RLPlayer(explore_prob=0.2)
 
-    # FILE = "./agent/rlplayer.pth"
-    # TrainRLPlayer.load(player, FILE)
-    TrainRLPlayer.train(player=player, epochs=20, batch_size=10, lr=0.001, discount=0.8)
+    FILE = "./agent/rlplayer.pth"
+    TrainRLPlayer.load(player, FILE)
+    # TrainRLPlayer.train(player=player, epochs=20, batch_size=20, lr=0.001, discount=0.8)
     # TrainRLPlayer.save(player, FILE)
 
     # Don't explore any more
-    # player.greedy_prob = 1.0
+    player.explore_prob = 0.0
 
-    play_game_slowly(player)
-    # play_game_fast(player)
+    # play_game_slowly(player)
+    play_game_fast(player)
