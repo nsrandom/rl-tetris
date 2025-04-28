@@ -4,24 +4,19 @@ import sys, os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from mechanics.tetris import TetrisGame, apply_moves
-from policy_gradient_player import PolicyGradient_RLPlayer
-from train_rl_player import TrainRLPlayer
+# from policy_gradient_player import PolicyGradient_RLPlayer
+# from train_rl_player import TrainRLPlayer
+from dqn_rl_player import DQN_RLPlayer, TrainRLPlayer
 
 from mechanics.main import setup_pygame, draw_board
 
 def play_game_fast(player):
     game = TetrisGame()
 
-    while not game.game_over:        
+    while not game.game_over:
+        # Ask the agent for the next move, and apply it
         rotations, lr_steps = player.choose_action(game)
-        
-        # Agent rotates and moves the piece left-right
-        for _ in range(rotations):
-            game.rotate_piece()
-        game.move_piece(0, lr_steps)
-        # And then we hard drop
-        while game.move_piece(1, 0):
-            pass
+        apply_moves(game, rotations, lr_steps)
 
         # Spawn a new piece if needed
         game.spawn_piece()
@@ -45,7 +40,6 @@ def play_game_slowly(player):
     game = TetrisGame()
     clock = pygame.time.Clock()
     fall_time = 0
-    frame_count = 0
     
     print("Game initialized")  # Debug print
     
@@ -99,15 +93,16 @@ def play_game_slowly(player):
 
 
 if __name__ == "__main__":
-    player = PolicyGradient_RLPlayer(explore_prob=0.2)
+    # player = PolicyGradient_RLPlayer(explore_prob=0.2)
+    player = DQN_RLPlayer(explore_prob=0.2)
 
-    FILE = "./agent/rlplayer.pth"
+    FILE = "./agent/dqn_player.pth"
     TrainRLPlayer.load(player, FILE)
-    # TrainRLPlayer.train(player=player, epochs=20, batch_size=20, lr=0.001, discount=0.8)
+    # TrainRLPlayer.train(player=player, epochs=200, batch_size=50, lr=0.001, discount=0.9)
     # TrainRLPlayer.save(player, FILE)
 
     # Don't explore any more
     player.explore_prob = 0.0
 
-    # play_game_slowly(player)
-    play_game_fast(player)
+    play_game_slowly(player)
+    # play_game_fast(player)

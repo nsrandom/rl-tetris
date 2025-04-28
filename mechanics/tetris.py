@@ -1,5 +1,6 @@
 import numpy as np
 import random
+
 from mechanics.tetromino import Tetromino, TETROMINO_SHAPES
 from mechanics.colors import BLACK, GRAY, PIECE_COLORS
 
@@ -19,8 +20,8 @@ class TetrisGame:
     def spawn_piece(self):
         """Create a new random tetromino piece"""
         if self.current_piece is None:
-            # shape_name = random.choice(list(TETROMINO_SHAPES.keys()))
-            shape_name = '.'
+            shape_name = random.choice(list(TETROMINO_SHAPES.keys()))
+            # shape_name = '.'
             self.current_piece = Tetromino(shape_name)
             if self.check_collision():
                 self.game_over = True
