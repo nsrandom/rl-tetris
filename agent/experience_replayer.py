@@ -29,17 +29,20 @@ class ExperienceReplayer:
                     holes += 1
         
         # Apply a penalty based on the number of holes found.
-        hole_penalty_factor = 0.25
+        hole_penalty_factor = 4
         penalties += holes * hole_penalty_factor
 
         # Penalize for bumpiness
         # Calculate column heights
         heights = [0] * board.shape[1]
+        max_height = 0
         for col in range(board.shape[1]):
             for row in range(board.shape[0]):
                 if board[row, col] != 0:
                     # Height is the number of rows from the bottom up to the highest block
                     heights[col] = board.shape[0] - row
+                    if heights[col] > max_height:
+                        max_height = heights[col]
                     break # Found the highest block in this column
 
         # Calculate bumpiness (square of differences between adjacent column heights)
@@ -51,17 +54,9 @@ class ExperienceReplayer:
         bumpiness_penalty_factor = 0.1
         penalties += bumpiness * bumpiness_penalty_factor
 
-        # Two boards can have the same score, so we want to increase the value
-        # of the terminal state by how much the board is filled.
-        # Further, we give a higher value to lower rows, to encourage higher
-        # fill density.
-        # We scale this value down since we don't want it to dominate over finishing rows.
-        # if game.game_over:
-        #     fill_score = 0
-        #     for i, row in enumerate(board):
-        #         fill_score += i * np.count_nonzero(row)
-        #     fill_score /= 100.0
-        #     reward += fill_score
+        # Apply a penalty factor for maximum height
+        height_penalty_factor = 0.5
+        penalties += height_penalty_factor * max_height
 
         return penalties
 

@@ -127,4 +127,4 @@ class TrainRLPlayer:
 
             # if (epoch + 1) % 100 == 0:
             #     print(f'Epoch {epoch+1}, Loss: {loss.item():.4f}')
-            print(f'Epoch {epoch+1}, Epoch loss: {epoch_loss.item():.0f}, Avg score: {(total_score / len(training_data)):.2f}')
+            print(f'Epoch {epoch+1}, Epoch loss: {(epoch_loss.item()/len(training_data)):.6f}, Avg score: {(total_score / len(training_data)):.2f}')

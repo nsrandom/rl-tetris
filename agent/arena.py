@@ -94,11 +94,14 @@ def play_game_slowly(player):
 
 if __name__ == "__main__":
     # player = PolicyGradient_RLPlayer(explore_prob=0.2)
-    player = DQN_RLPlayer(explore_prob=0.2)
+    player = DQN_RLPlayer(explore_prob=0.1)
 
+    # Load the player model from disk
     FILE = "./agent/dqn_player.pth"
     TrainRLPlayer.load(player, FILE)
-    # TrainRLPlayer.train(player=player, epochs=200, batch_size=50, lr=0.001, discount=0.9)
+
+    # Train the player, and save the results
+    # TrainRLPlayer.train(player=player, epochs=1000, batch_size=50, lr=0.001, discount=0.9)
     # TrainRLPlayer.save(player, FILE)
 
     # Don't explore any more
