@@ -1,5 +1,6 @@
 import pygame
 import sys, os
+import numpy as np
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
@@ -9,6 +10,27 @@ from mechanics.tetris import TetrisGame, apply_moves
 from dqn_rl_player import DQN_RLPlayer, TrainRLPlayer
 
 from mechanics.main import setup_pygame, draw_board
+
+
+def benchmark_player(player, num_times=100):
+    scores = []
+    for _ in range(num_times):
+        game = TetrisGame()
+        while not game.game_over:
+            rotations, lr_steps = player.choose_action(game)
+            apply_moves(game, rotations, lr_steps)
+            game.spawn_piece()
+        scores.append(game.score)
+
+    scores = np.array([scores])
+
+    print(f"After {num_times} runs:")
+    print(f"\tMean score: {np.mean(scores)}")
+    print(f"\tMedian score: {np.median(scores)}")
+    print(f"\tBest score: {np.max(scores)}")
+    print(f"\tStandard deviation: {np.std(scores)}")
+    print(f"\t25th percentile score: {np.percentile(scores, 25)}")
+    print(f"\t75th percentile score: {np.percentile(scores, 75)}")
 
 def play_game_fast(player):
     game = TetrisGame()
@@ -107,5 +129,8 @@ if __name__ == "__main__":
     # Don't explore any more
     player.explore_prob = 0.0
 
-    play_game_slowly(player)
+    benchmark_player(player)
+    # play_game_slowly(player)
     # play_game_fast(player)
+
+    
