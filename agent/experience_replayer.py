@@ -29,7 +29,7 @@ class ExperienceReplayer:
                     holes += 1
         
         # Apply a penalty based on the number of holes found.
-        hole_penalty_factor = 4
+        hole_penalty_factor = 10
         penalties += holes * hole_penalty_factor
 
         # Penalize for bumpiness
