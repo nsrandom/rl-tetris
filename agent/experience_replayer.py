@@ -9,7 +9,8 @@ from mechanics.tetris import TetrisGame, apply_moves
 class ExperienceReplayer:
 
     @staticmethod
-    def compute_penalties(board):
+    def compute_penalties(game):
+        board = game.board
         penalties = 0
 
         # Penalize for holes in rows
@@ -58,6 +59,10 @@ class ExperienceReplayer:
         height_penalty_factor = 0.5
         penalties += height_penalty_factor * max_height
 
+        # Apply a penalty if this move finished the game
+        if game.game_over:
+            penalties += 100
+
         return penalties
 
     # Runs the game multiple times, and returns the replay experiences
@@ -86,7 +91,7 @@ class ExperienceReplayer:
                 # Spawn a new piece if needed
                 game.spawn_piece()
 
-                penalties = ExperienceReplayer.compute_penalties(game.board)
+                penalties = ExperienceReplayer.compute_penalties(game)
                 reward = (game.score - prev_score, penalties)
 
                 new_state = copy.deepcopy(game.board)
