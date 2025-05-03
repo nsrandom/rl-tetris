@@ -14,13 +14,14 @@ from mechanics.main import setup_pygame, draw_board
 
 def benchmark_player(player, num_times=100):
     scores = []
-    for _ in range(num_times):
+    for i in range(num_times):
         game = TetrisGame()
         while not game.game_over:
             rotations, lr_steps = player.choose_action(game)
             apply_moves(game, rotations, lr_steps)
             game.spawn_piece()
         scores.append(game.score)
+        print(f"Game {i+1}: Score {game.score}")
 
     scores = np.array([scores])
 
