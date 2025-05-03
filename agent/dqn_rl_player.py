@@ -4,7 +4,7 @@ import copy
 
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from constants import BOARD_SIZE, PIECE_SIZE, ROTATIONS, LR_MOVES, LR_OFFSET
+from constants import BOARD_SIZE, ROTATIONS, LR_MOVES, LR_OFFSET
 from mechanics.tetris import TetrisGame, apply_moves
 from experience_replayer import ExperienceReplayer
 
